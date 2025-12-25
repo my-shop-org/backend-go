@@ -1,0 +1,45 @@
+# Go build artifacts
+/bin/
+**/tmp/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Dependency directories
+/vendor/
+
+# IDE/editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.DS_Store
+
+# Air live reload
+.air/
+.air.toml
+
+# Logs
+*.log
+
+# Module files
+/go.sum
+
+# Docker
+*.env
+
+# Ignore coverage reports
+coverage.out
+
+# Ignore testdata
+/testdata/
+
+# Ignore by OS
+Thumbs.db
+
+# Ignore by Air
+build-errors.log
