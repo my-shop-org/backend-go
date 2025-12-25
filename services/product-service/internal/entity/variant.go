@@ -13,5 +13,5 @@ type Variant struct {
 	SKU        string `gorm:"uniqueIndex;not null"`
 	Price      float64
 	Stock      int
-	Attributes []VariantAttributeValue
+	Attributes []AttributeValue `gorm:"many2many:variant_attribute_values;"`
 }
