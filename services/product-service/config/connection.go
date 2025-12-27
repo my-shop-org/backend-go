@@ -13,8 +13,6 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-var DB *gorm.DB
-
 func ConnectDB() *gorm.DB {
 	dsn := getDSN()
 
@@ -47,8 +45,7 @@ func ConnectDB() *gorm.DB {
 	rawDB.SetMaxIdleConns(25)
 	rawDB.SetConnMaxLifetime(5 * time.Minute)
 
-	DB = db
-	return DB
+	return db
 }
 
 func getDSN() string {

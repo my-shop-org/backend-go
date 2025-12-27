@@ -22,7 +22,7 @@ func (u *CategoryUsecase) AddCategory(category *request.CategoryRequest) error {
 	return u.categoryRepo.AddCategory(category)
 }
 
-func (u *CategoryUsecase) UpdateCategory(id string, category *request.CategoryRequest) (*response.CategoryResponse, error) {
+func (u *CategoryUsecase) UpdateCategory(id string, category *request.CategoryPatchRequest) (*response.CategoryResponse, error) {
 	return u.categoryRepo.UpdateCategory(id, category)
 }
 

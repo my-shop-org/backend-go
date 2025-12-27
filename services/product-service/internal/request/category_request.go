@@ -1,9 +1,13 @@
 package request
 
-import "github.com/google/uuid"
-
 type CategoryRequest struct {
-	Name        string     `json:"name" validate:"required"`
-	Description string     `json:"description,omitempty"`
-	ParentID    *uuid.UUID `json:"parent_id,omitempty"`
+	Name        string `json:"name" validate:"required"`
+	Description string `json:"description,omitempty"`
+	ParentID    *uint  `json:"parent_id,omitempty"`
+}
+
+type CategoryPatchRequest struct {
+	Name        *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+	ParentID    *uint   `json:"parent_id,omitempty"`
 }

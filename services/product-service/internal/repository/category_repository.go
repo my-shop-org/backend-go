@@ -1,12 +1,13 @@
 package repository
 
 import (
+	"errors"
 	"product-service/internal/entity"
 	"product-service/internal/pkg"
 	"product-service/internal/request"
 	"product-service/internal/response"
 
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 )
 
@@ -51,10 +52,10 @@ func (r *CategoryRepository) GetCategoryByID(id string) (*response.CategoryRespo
 	}
 
 	return &response.CategoryResponse{
-		ID:          category.ID.String(),
+		ID:          category.ID,
 		Name:        category.Name,
 		Description: category.Description,
-		ParentID:    pkg.UUIDToStringPtr(category.ParentID),
+		ParentID:    category.ParentID,
 	}, nil
 }
 
@@ -74,7 +75,7 @@ func (r *CategoryRepository) GetChildCategoriesByID(id string) ([]response.Categ
 
 func (r *CategoryRepository) AddCategory(category *request.CategoryRequest) error {
 	if category.ParentID != nil {
-		if !r.CheckIfCategoryExists(category.ParentID.String()) {
+		if !r.CheckIfCategoryExists(pkg.UintToString(*category.ParentID)) {
 			return pkg.ParentCategoryNotFound
 		}
 	}
@@ -83,32 +84,41 @@ func (r *CategoryRepository) AddCategory(category *request.CategoryRequest) erro
 		Description: category.Description,
 		ParentID:    category.ParentID,
 	}
-	return r.db.Create(&cat).Error
+	err := r.db.Create(&cat).Error
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return pkg.DuplicateEntry
+		}
+		return err
+	}
+	return nil
 }
 
-func (r *CategoryRepository) UpdateCategory(id string, category *request.CategoryRequest) (*response.CategoryResponse, error) {
-	if category.ParentID != nil && id == category.ParentID.String() {
-		return nil, pkg.CategoryCannotBeItsOwnParent
-	}
+func (r *CategoryRepository) UpdateCategory(id string, category *request.CategoryPatchRequest) (
+	*response.CategoryResponse, error) {
 	if !r.CheckIfCategoryExists(id) {
 		return nil, pkg.CategoryNotFound
 	}
-	if category.ParentID != nil && !r.CheckIfCategoryExists(category.ParentID.String()) {
-		return nil, pkg.ParentCategoryNotFound
+
+	if category.ParentID != nil {
+		if *category.ParentID == pkg.StringToUint(id) {
+			return nil, pkg.CategoryCannotBeItsOwnParent
+		}
+		if !r.CheckIfCategoryExists(pkg.UintToString(*category.ParentID)) {
+			return nil, pkg.ParentCategoryNotFound
+		}
 	}
-	if err := r.db.Model(&entity.Category{}).Where("id = ?", id).Updates(entity.Category{
-		Name:        category.Name,
-		Description: category.Description,
-		ParentID:    category.ParentID,
-	}).Error; err != nil {
+
+	if err := r.db.Model(&entity.Category{}).Where("id = ?", id).Updates(category).Error; err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return nil, pkg.DuplicateEntry
+		}
 		return nil, err
 	}
-	return &response.CategoryResponse{
-		ID:          id,
-		Name:        category.Name,
-		Description: category.Description,
-		ParentID:    pkg.UUIDToStringPtr(category.ParentID),
-	}, nil
+
+	return nil, nil
 }
 
 func (r *CategoryRepository) DeleteCategory(id string) error {
@@ -132,7 +142,7 @@ func (r *CategoryRepository) GetCategoryTree() ([]*response.CategoryTreeResponse
 	return r.buildCategoryTree(nil)
 }
 
-func (r *CategoryRepository) buildCategoryTree(parentID *uuid.UUID) ([]*response.CategoryTreeResponse, error) {
+func (r *CategoryRepository) buildCategoryTree(parentID *uint) ([]*response.CategoryTreeResponse, error) {
 	var flatCats []response.CategoryResponse
 	if parentID == nil {
 		err := r.db.Model(&entity.Category{}).
@@ -154,8 +164,7 @@ func (r *CategoryRepository) buildCategoryTree(parentID *uuid.UUID) ([]*response
 
 	var treeCats []*response.CategoryTreeResponse
 	for i := range flatCats {
-		parsedUUID, _ := uuid.Parse(flatCats[i].ID)
-		children, _ := r.buildCategoryTree(&parsedUUID)
+		children, _ := r.buildCategoryTree(&flatCats[i].ID)
 		treeCat := &response.CategoryTreeResponse{
 			CategoryResponse: flatCats[i],
 			Children:         children,

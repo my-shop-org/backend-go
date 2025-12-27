@@ -3,9 +3,9 @@ package pkg
 import (
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -69,10 +69,14 @@ func GetErrorMessage(fe validator.FieldError) string {
 	return fe.Error()
 }
 
-func UUIDToStringPtr(u *uuid.UUID) *string {
-	if u == nil {
-		return nil
+func UintToString(u uint) string {
+	return strconv.FormatUint(uint64(u), 10)
+}
+
+func StringToUint(s string) uint {
+	u64, err := strconv.ParseUint(s, 10, 64)
+	if err != nil {
+		return 0
 	}
-	str := u.String()
-	return &str
+	return uint(u64)
 }
