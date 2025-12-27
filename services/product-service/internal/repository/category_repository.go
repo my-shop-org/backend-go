@@ -139,37 +139,39 @@ func (r *CategoryRepository) DeleteCategory(id string) error {
 }
 
 func (r *CategoryRepository) GetCategoryTree() ([]*response.CategoryTreeResponse, error) {
-	return r.buildCategoryTree(nil)
-}
+	// Fetch all categories in one query
+	var allCategories []response.CategoryResponse
+	if err := r.db.Model(&entity.Category{}).
+		Select("id, name, description, parent_id").
+		Scan(&allCategories).Error; err != nil {
+		return nil, err
+	}
 
-func (r *CategoryRepository) buildCategoryTree(parentID *uint) ([]*response.CategoryTreeResponse, error) {
-	var flatCats []response.CategoryResponse
-	if parentID == nil {
-		err := r.db.Model(&entity.Category{}).
-			Select("id, name, description, parent_id").
-			Where("parent_id IS NULL").
-			Scan(&flatCats).Error
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		err := r.db.Model(&entity.Category{}).
-			Select("id, name, description, parent_id").
-			Where("parent_id = ?", parentID).
-			Scan(&flatCats).Error
-		if err != nil {
-			return nil, err
+	// Build maps for quick lookup
+	categoryMap := make(map[uint]*response.CategoryTreeResponse)
+	var roots []*response.CategoryTreeResponse
+
+	// First pass: create all tree nodes
+	for i := range allCategories {
+		categoryMap[allCategories[i].ID] = &response.CategoryTreeResponse{
+			CategoryResponse: allCategories[i],
+			Children:         []*response.CategoryTreeResponse{},
 		}
 	}
 
-	var treeCats []*response.CategoryTreeResponse
-	for i := range flatCats {
-		children, _ := r.buildCategoryTree(&flatCats[i].ID)
-		treeCat := &response.CategoryTreeResponse{
-			CategoryResponse: flatCats[i],
-			Children:         children,
+	// Second pass: build parent-child relationships
+	for i := range allCategories {
+		node := categoryMap[allCategories[i].ID]
+		if allCategories[i].ParentID == nil {
+			// Root category
+			roots = append(roots, node)
+		} else {
+			// Add to parent's children
+			if parent, exists := categoryMap[*allCategories[i].ParentID]; exists {
+				parent.Children = append(parent.Children, node)
+			}
 		}
-		treeCats = append(treeCats, treeCat)
 	}
-	return treeCats, nil
+
+	return roots, nil
 }
