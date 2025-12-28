@@ -41,3 +41,7 @@ func (u *CategoryUsecase) GetCategoryTree() ([]*response.CategoryTreeResponse, e
 func (u *CategoryUsecase) GetChildCategoriesByID(id string) ([]response.CategoryResponse, error) {
 	return u.categoryRepo.GetChildCategoriesByID(id)
 }
+
+func (u *CategoryUsecase) GetLeafCategories() ([]response.CategoryResponse, error) {
+	return u.categoryRepo.GetLeafCategories()
+}

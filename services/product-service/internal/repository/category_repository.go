@@ -175,3 +175,21 @@ func (r *CategoryRepository) GetCategoryTree() ([]*response.CategoryTreeResponse
 
 	return roots, nil
 }
+
+func (r *CategoryRepository) GetLeafCategories() ([]response.CategoryResponse, error) {
+	var categories []response.CategoryResponse
+	if err := r.db.Model(&entity.Category{}).
+		Select("id, name, description, parent_id").
+		Where("id NOT IN (?)",
+			r.db.Model(&entity.Category{}).
+				Select("DISTINCT parent_id").
+				Where("parent_id IS NOT NULL"),
+		).
+		Scan(&categories).Error; err != nil {
+		return nil, err
+	}
+	if categories == nil {
+		categories = make([]response.CategoryResponse, 0)
+	}
+	return categories, nil
+}

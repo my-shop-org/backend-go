@@ -1,4 +1,4 @@
-package internal
+package router
 
 import (
 	"product-service/internal/handler"
@@ -23,7 +23,12 @@ func RegisterCategoryRoutes(e *echo.Echo, db *gorm.DB) {
 	categoryGroup.PATCH("/:id", pkg.BindAndValidate(categoryHandler.PatchCategory))
 	categoryGroup.DELETE("/:id", categoryHandler.DeleteCategory)
 	categoryGroup.GET("/tree", categoryHandler.GetCategoryTree)
+	categoryGroup.GET("/leaf", categoryHandler.GetLeafCategories)
 	categoryGroup.GET("/:id/children", categoryHandler.GetChildCategoriesByID)
 
 	categoryGroup.GET("/:id/products", categoryHandler.GetProductsByCategoryID)
+}
+
+func RegisterProductRoutes(e *echo.Echo, db *gorm.DB) {
+	// productGroup := e.Group("/products")
 }

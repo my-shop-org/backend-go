@@ -97,6 +97,14 @@ func (h *CategoryHandler) GetChildCategoriesByID(c echo.Context) error {
 	return c.JSON(200, echo.Map{"data": categories})
 }
 
+func (h *CategoryHandler) GetLeafCategories(c echo.Context) error {
+	categories, err := h.categoryUsecase.GetLeafCategories()
+	if err != nil {
+		return c.JSON(500, echo.Map{"message": "Failed to retrieve leaf categories"})
+	}
+	return c.JSON(200, echo.Map{"data": categories})
+}
+
 func (h *CategoryHandler) GetProductsByCategoryID(c echo.Context) error {
 	return nil
 }

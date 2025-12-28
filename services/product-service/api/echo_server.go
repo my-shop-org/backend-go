@@ -2,7 +2,7 @@ package server
 
 import (
 	"product-service/config"
-	"product-service/internal"
+	router "product-service/internal"
 	"product-service/internal/entity"
 	"product-service/internal/middleware"
 	"product-service/internal/pkg"
@@ -16,6 +16,7 @@ func StartServer() {
 
 	db.AutoMigrate(
 		&entity.Category{},
+		&entity.Product{},
 	)
 
 	e := echo.New()
@@ -23,7 +24,8 @@ func StartServer() {
 
 	middleware.RegisterBasicMiddleware(e)
 
-	internal.RegisterCategoryRoutes(e, db)
+	router.RegisterCategoryRoutes(e, db)
+	router.RegisterProductRoutes(e, db)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

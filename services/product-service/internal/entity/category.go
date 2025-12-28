@@ -10,5 +10,5 @@ type Category struct {
 	Description string      `json:"description,omitempty"`
 	ParentID    *uint       `json:"parent_id,omitempty"`
 	Children    []*Category `json:"children,omitempty" gorm:"foreignKey:ParentID"`
-	Products    []*Product  `json:"products,omitempty" gorm:"foreignKey:CategoryID"`
+	Products    []*Product  `json:"products,omitempty" gorm:"many2many:product_categories;"`
 }

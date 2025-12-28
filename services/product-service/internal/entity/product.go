@@ -6,13 +6,11 @@ import (
 
 type Product struct {
 	gorm.Model
-	ID          uint           `gorm:"primaryKey"`
-	Name        string         `gorm:"not null"`
-	Description string
-	CategoryID  uint           `gorm:"not null"`
-	Category    Category
-	Price       float64        `gorm:"not null"`
-	CreatedBy   uint           `gorm:"not null"`
-	Images      []ProductImage `gorm:"foreignKey:ProductID"`
-	Variants    []Variant      `gorm:"foreignKey:ProductID"`
+	ID            uint   `gorm:"primaryKey"`
+	Name          string `gorm:"not null"`
+	Description   string
+	Categories    []*Category    `json:"categories,omitempty" gorm:"many2many:product_categories;"`
+	Price         float64        `gorm:"not null"`
+	ProductImages []ProductImage `gorm:"foreignKey:ProductID"`
+	Variants      []Variant      `gorm:"foreignKey:ProductID"`
 }
