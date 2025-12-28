@@ -104,7 +104,3 @@ func (h *CategoryHandler) GetLeafCategories(c echo.Context) error {
 	}
 	return c.JSON(200, echo.Map{"data": categories})
 }
-
-func (h *CategoryHandler) GetProductsByCategoryID(c echo.Context) error {
-	return nil
-}

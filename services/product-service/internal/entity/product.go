@@ -1,16 +1,18 @@
 package entity
 
 import (
-	"gorm.io/gorm"
+	"time"
 )
 
 type Product struct {
-	gorm.Model
-	ID            uint   `gorm:"primaryKey"`
-	Name          string `gorm:"not null"`
-	Description   string
-	Categories    []*Category    `json:"categories,omitempty" gorm:"many2many:product_categories;"`
-	Price         float64        `gorm:"not null"`
-	ProductImages []ProductImage `gorm:"foreignKey:ProductID"`
-	Variants      []Variant      `gorm:"foreignKey:ProductID"`
+	Name          string         `json:"name" gorm:"unique;not null"`
+	Description   string         `json:"description"`
+	Categories    []*Category    `gorm:"many2many:product_categories;" json:"categories,omitempty"`
+	Price         float64        `gorm:"not null" json:"price"`
+	ProductImages []ProductImage `gorm:"foreignKey:ProductID" json:"product_images,omitempty"`
+	Variants      []Variant      `gorm:"foreignKey:ProductID" json:"variants,omitempty"`
+
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 }

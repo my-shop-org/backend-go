@@ -25,10 +25,19 @@ func RegisterCategoryRoutes(e *echo.Echo, db *gorm.DB) {
 	categoryGroup.GET("/tree", categoryHandler.GetCategoryTree)
 	categoryGroup.GET("/leaf", categoryHandler.GetLeafCategories)
 	categoryGroup.GET("/:id/children", categoryHandler.GetChildCategoriesByID)
-
-	categoryGroup.GET("/:id/products", categoryHandler.GetProductsByCategoryID)
 }
 
 func RegisterProductRoutes(e *echo.Echo, db *gorm.DB) {
-	// productGroup := e.Group("/products")
+	productGroup := e.Group("/products")
+
+	productRepo := repository.NewProductRepository(db)
+	productUsecase := usecase.NewProductUsecase(productRepo)
+	productHandler := handler.NewProductHandler(productUsecase)
+
+	productGroup.GET("", productHandler.GetAllProducts)
+	productGroup.GET("/:id", productHandler.GetProductByID)
+	productGroup.POST("", pkg.BindAndValidate(productHandler.AddProduct))
+	productGroup.PATCH("/:id", pkg.BindAndValidate(productHandler.PatchProduct))
+	productGroup.DELETE("/:id", productHandler.DeleteProduct)
+
 }
