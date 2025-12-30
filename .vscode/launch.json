@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Product Service (Local)",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/services/product-service",
+      "args": ["local"],
+      "apiVersion": 2,
+      "dlvToolPath": "${env:HOME}/go/bin/dlv"
+    },
+    {
+      "name": "Product Service (Debug Current File)",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${file}",
+      "apiVersion": 2
+    }
+  ]
+}

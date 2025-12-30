@@ -13,14 +13,12 @@
 /vendor/
 
 # IDE/editor files
-.vscode/
 .idea/
 *.swp
 *.swo
 *.DS_Store
 
 # Air live reload
-.air/
 .air.toml
 
 # Logs

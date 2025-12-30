@@ -39,5 +39,4 @@ func RegisterProductRoutes(e *echo.Echo, db *gorm.DB) {
 	productGroup.POST("", pkg.BindAndValidate(productHandler.AddProduct))
 	productGroup.PATCH("/:id", pkg.BindAndValidate(productHandler.PatchProduct))
 	productGroup.DELETE("/:id", productHandler.DeleteProduct)
-
 }

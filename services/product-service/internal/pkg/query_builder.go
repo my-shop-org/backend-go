@@ -40,3 +40,10 @@ func (qb *QueryBuilder) ApplyFilter(filter map[string]interface{}) *QueryBuilder
 	}
 	return qb
 }
+
+func (qb *QueryBuilder) ApplyPreload(relations []string) *QueryBuilder {
+	for _, relation := range relations {
+		qb.query = qb.query.Preload(relation)
+	}
+	return qb
+}

@@ -1,8 +1,10 @@
 package repository
 
 import (
+	"context"
 	"errors"
 	"product-service/internal/entity"
+	"product-service/internal/params"
 	"product-service/internal/pkg"
 	"product-service/internal/request"
 	"product-service/internal/response"
@@ -19,18 +21,37 @@ func NewProductRepository(db *gorm.DB) *ProductRepository {
 	return &ProductRepository{db: db}
 }
 
-func (r *ProductRepository) GetAllProducts() ([]*entity.Product, error) {
+func (r *ProductRepository) GetAllProducts(ctx context.Context, params *params.ProductQueryParam) (
+	[]*entity.Product,
+	error) {
 	var products []*entity.Product
-	if err := r.db.Preload("Categories").Find(&products).Error; err != nil {
+
+	if err := r.BuildQuery(ctx, params).Find(&products).Error; err != nil {
 		return nil, err
 	}
 
 	return products, nil
 }
 
-func (r *ProductRepository) GetProductByID(id string) (*entity.Product, error) {
+func (r *ProductRepository) BuildQuery(ctx context.Context, params *params.ProductQueryParam) *gorm.DB {
+
+	baseQuery := r.db.WithContext(ctx).Model(&entity.Product{})
+
+	query := pkg.NewQueryBuilder(baseQuery).
+		ApplyPagination(params.Limit, params.Offset).
+		ApplyPreload([]string{"Categories"}).Build()
+
+	if params.CategoryID != "" {
+		query = query.Joins("JOIN product_categories pc ON pc.product_id = products.id").
+			Where("pc.category_id = ?", params.CategoryID)
+	}
+
+	return query
+}
+
+func (r *ProductRepository) GetProductByID(ctx context.Context, id string) (*entity.Product, error) {
 	var product = new(entity.Product)
-	if err := r.db.Preload("Categories").First(&product, "id = ?", id).Error; err != nil {
+	if err := r.db.WithContext(ctx).Preload("Categories").First(&product, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, pkg.ProductNotFound
 		}
@@ -50,13 +71,13 @@ func (r *ProductRepository) GetProductByID(id string) (*entity.Product, error) {
 	return product, nil
 }
 
-func (r *ProductRepository) AddProduct(productReq *request.ProductRequest) error {
-	categories := r.CheckCategoriesExist(productReq.Categories)
+func (r *ProductRepository) AddProduct(ctx context.Context, productReq *request.ProductRequest) error {
+	categories := r.CheckCategoriesExist(ctx, productReq.Categories)
 	if categories == nil {
 		return pkg.CategoryNotFound
 	}
 
-	return r.db.Transaction(func(tx *gorm.DB) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		product := entity.Product{
 			Name:        productReq.Name,
 			Description: productReq.Description,
@@ -79,16 +100,16 @@ func (r *ProductRepository) AddProduct(productReq *request.ProductRequest) error
 	})
 }
 
-func (r *ProductRepository) UpdateProduct(id string, productReq *request.ProductPatchRequest) (
+func (r *ProductRepository) UpdateProduct(ctx context.Context, id string, productReq *request.ProductPatchRequest) (
 	*entity.Product, error) {
 	if productReq.Categories != nil {
-		categories := r.CheckCategoriesExist(*productReq.Categories)
+		categories := r.CheckCategoriesExist(ctx, *productReq.Categories)
 		if categories == nil {
 			return nil, pkg.CategoryNotFound
 		}
 	}
 
-	err := r.db.Transaction(func(tx *gorm.DB) error {
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		updates := make(map[string]interface{})
 		if productReq.Name != nil {
 			updates["name"] = *productReq.Name
@@ -101,7 +122,7 @@ func (r *ProductRepository) UpdateProduct(id string, productReq *request.Product
 		}
 
 		if productReq.Categories != nil {
-			categories := r.CheckCategoriesExist(*productReq.Categories)
+			categories := r.CheckCategoriesExist(ctx, *productReq.Categories)
 			var product entity.Product
 			if err := tx.First(&product, "id = ?", id).Error; err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -122,19 +143,19 @@ func (r *ProductRepository) UpdateProduct(id string, productReq *request.Product
 		return nil, err
 	}
 
-	return r.GetProductByID(id)
+	return r.GetProductByID(ctx, id)
 }
 
-func (r *ProductRepository) DeleteProduct(id string) error {
+func (r *ProductRepository) DeleteProduct(ctx context.Context, id string) error {
 	var product entity.Product
-	if err := r.db.First(&product, "id = ?", id).Error; err != nil {
+	if err := r.db.WithContext(ctx).First(&product, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return pkg.ProductNotFound
 		}
 		return err
 	}
 
-	return r.db.Transaction(func(tx *gorm.DB) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(&product).Association("Categories").Clear(); err != nil {
 			return err
 		}
@@ -146,9 +167,9 @@ func (r *ProductRepository) DeleteProduct(id string) error {
 	})
 }
 
-func (r *ProductRepository) CheckCategoriesExist(catIDs []uint) []entity.Category {
+func (r *ProductRepository) CheckCategoriesExist(ctx context.Context, catIDs []uint) []entity.Category {
 	var categories []entity.Category
-	if err := r.db.Where("id IN ?", catIDs).Find(&categories).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("id IN ?", catIDs).Find(&categories).Error; err != nil {
 		return nil
 	}
 

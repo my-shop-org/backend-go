@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"net/http"
 	"product-service/internal/pkg"
 	"product-service/internal/request"
 	"product-service/internal/usecase"
@@ -20,7 +21,7 @@ func NewCategoryHandler(categoryUsecase *usecase.CategoryUsecase) *CategoryHandl
 func (h *CategoryHandler) GetAllCategories(c echo.Context) error {
 	categories, err := h.categoryUsecase.GetAllCategories()
 	if err != nil {
-		return c.JSON(500, echo.Map{"message": "Failed to retrieve categories"})
+		return c.JSON(http.StatusInternalServerError, echo.Map{"message": "Failed to retrieve categories"})
 	}
 	return c.JSON(200, echo.Map{"data": categories})
 }
@@ -29,24 +30,24 @@ func (h *CategoryHandler) AddCategory(c echo.Context, category *request.Category
 	if err := h.categoryUsecase.AddCategory(category); err != nil {
 		switch {
 		case errors.Is(err, pkg.DuplicateEntry):
-			return c.JSON(409, echo.Map{"message": "Category name already exists"})
+			return c.JSON(http.StatusConflict, echo.Map{"message": "Category name already exists"})
 		case errors.Is(err, pkg.ParentCategoryNotFound):
-			return c.JSON(404, echo.Map{"message": "Parent category not found"})
+			return c.JSON(http.StatusNotFound, echo.Map{"message": "Parent category not found"})
 		default:
-			return c.JSON(500, echo.Map{"message": "Failed to create category"})
+			return c.JSON(http.StatusInternalServerError, echo.Map{"message": "Failed to create category"})
 		}
 	}
 
-	return c.JSON(201, echo.Map{"message": "Category created successfully", "data": category})
+	return c.JSON(http.StatusCreated, echo.Map{"message": "Category created successfully", "data": category})
 }
 
 func (h *CategoryHandler) GetCategoryByID(c echo.Context) error {
 	id := c.Param("id")
 	category, err := h.categoryUsecase.GetCategoryByID(id)
 	if err != nil {
-		return c.JSON(500, echo.Map{"message": err.Error()})
+		return c.JSON(http.StatusInternalServerError, echo.Map{"message": err.Error()})
 	}
-	return c.JSON(200, category)
+	return c.JSON(http.StatusOK, category)
 }
 
 func (h *CategoryHandler) PatchCategory(c echo.Context, category *request.CategoryPatchRequest) error {
@@ -56,51 +57,51 @@ func (h *CategoryHandler) PatchCategory(c echo.Context, category *request.Catego
 	if err != nil {
 		switch {
 		case errors.Is(err, pkg.CategoryNotFound):
-			return c.JSON(404, echo.Map{"message": "Category not found"})
+			return c.JSON(http.StatusNotFound, echo.Map{"message": "Category not found"})
 		case errors.Is(err, pkg.ParentCategoryNotFound):
-			return c.JSON(404, echo.Map{"message": "Parent category not found"})
+			return c.JSON(http.StatusNotFound, echo.Map{"message": "Parent category not found"})
 		case errors.Is(err, pkg.CategoryCannotBeItsOwnParent):
-			return c.JSON(400, echo.Map{"message": "Category cannot be its own parent"})
+			return c.JSON(http.StatusBadRequest, echo.Map{"message": "Category cannot be its own parent"})
 		case errors.Is(err, pkg.DuplicateEntry):
-			return c.JSON(409, echo.Map{"message": "Category name already exists"})
+			return c.JSON(http.StatusConflict, echo.Map{"message": "Category name already exists"})
 		case errors.Is(err, pkg.NoFieldsToUpdate):
-			return c.JSON(400, echo.Map{"message": "No fields provided to update"})
+			return c.JSON(http.StatusBadRequest, echo.Map{"message": "No fields provided to update"})
 		default:
-			return c.JSON(500, echo.Map{"message": "Failed to update category"})
+			return c.JSON(http.StatusInternalServerError, echo.Map{"message": "Failed to update category"})
 		}
 	}
 
-	return c.JSON(200, echo.Map{"message": "Category updated successfully", "data": updatedCategory})
+	return c.JSON(http.StatusOK, echo.Map{"message": "Category updated successfully", "data": updatedCategory})
 }
 
 func (h *CategoryHandler) DeleteCategory(c echo.Context) error {
 	id := c.Param("id")
 	if err := h.categoryUsecase.DeleteCategory(id); err != nil {
-		return c.JSON(500, echo.Map{"message": err.Error()})
+		return c.JSON(http.StatusInternalServerError, echo.Map{"message": err.Error()})
 	}
-	return c.JSON(204, nil)
+	return c.JSON(http.StatusNoContent, nil)
 }
 
 func (h *CategoryHandler) GetCategoryTree(c echo.Context) error {
 	categories, err := h.categoryUsecase.GetCategoryTree()
 	if err != nil {
-		return c.JSON(500, echo.Map{"message": "Failed to retrieve category tree"})
+		return c.JSON(http.StatusInternalServerError, echo.Map{"message": "Failed to retrieve category tree"})
 	}
-	return c.JSON(200, echo.Map{"data": categories})
+	return c.JSON(http.StatusOK, echo.Map{"data": categories})
 }
 
 func (h *CategoryHandler) GetChildCategoriesByID(c echo.Context) error {
 	categories, err := h.categoryUsecase.GetChildCategoriesByID(c.Param("id"))
 	if err != nil {
-		return c.JSON(500, echo.Map{"message": "Failed to retrieve child categories"})
+		return c.JSON(http.StatusInternalServerError, echo.Map{"message": "Failed to retrieve child categories"})
 	}
-	return c.JSON(200, echo.Map{"data": categories})
+	return c.JSON(http.StatusOK, echo.Map{"data": categories})
 }
 
 func (h *CategoryHandler) GetLeafCategories(c echo.Context) error {
 	categories, err := h.categoryUsecase.GetLeafCategories()
 	if err != nil {
-		return c.JSON(500, echo.Map{"message": "Failed to retrieve leaf categories"})
+		return c.JSON(http.StatusInternalServerError, echo.Map{"message": "Failed to retrieve leaf categories"})
 	}
-	return c.JSON(200, echo.Map{"data": categories})
+	return c.JSON(http.StatusOK, echo.Map{"data": categories})
 }
