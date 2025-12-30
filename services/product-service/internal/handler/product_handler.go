@@ -84,12 +84,3 @@ func (h *ProductHandler) DeleteProduct(c echo.Context) error {
 	}
 	return c.JSON(204, nil)
 }
-
-func (h *ProductHandler) GetProductsByCategoryID(c echo.Context) error {
-	categoryID := c.Param("id")
-	products, err := h.productUsecase.GetProductsByCategoryID(categoryID)
-	if err != nil {
-		return c.JSON(500, echo.Map{"message": "Failed to retrieve products"})
-	}
-	return c.JSON(200, echo.Map{"data": products})
-}

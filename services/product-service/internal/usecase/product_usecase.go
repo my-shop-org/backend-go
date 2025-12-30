@@ -4,7 +4,6 @@ import (
 	"product-service/internal/entity"
 	"product-service/internal/repository"
 	"product-service/internal/request"
-	"product-service/internal/response"
 )
 
 type ProductUsecase struct {
@@ -33,8 +32,4 @@ func (u *ProductUsecase) UpdateProduct(id string, product *request.ProductPatchR
 
 func (u *ProductUsecase) DeleteProduct(id string) error {
 	return u.productRepo.DeleteProduct(id)
-}
-
-func (u *ProductUsecase) GetProductsByCategoryID(categoryID string) ([]response.ProductResponse, error) {
-	return u.productRepo.GetProductsByCategoryID(categoryID)
 }

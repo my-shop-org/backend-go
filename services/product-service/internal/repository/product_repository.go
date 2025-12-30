@@ -146,43 +146,6 @@ func (r *ProductRepository) DeleteProduct(id string) error {
 	})
 }
 
-func (r *ProductRepository) GetProductsByCategoryID(categoryID string) ([]response.ProductResponse, error) {
-	var products []entity.Product
-	if err := r.db.Preload("Categories").
-		Joins("JOIN product_categories ON products.id = product_categories.product_id").
-		Where("product_categories.category_id = ?", categoryID).
-		Find(&products).Error; err != nil {
-		return nil, err
-	}
-
-	productResponses := make([]response.ProductResponse, len(products))
-	for i, product := range products {
-		categories := make([]response.CategoryResponse, len(product.Categories))
-		for j, cat := range product.Categories {
-			categories[j] = response.CategoryResponse{
-				ID:          cat.ID,
-				Name:        cat.Name,
-				Description: cat.Description,
-				ParentID:    cat.ParentID,
-			}
-		}
-
-		productResponses[i] = response.ProductResponse{
-			ID:          product.ID,
-			Name:        product.Name,
-			Description: product.Description,
-			Categories:  categories,
-			Price:       product.Price,
-		}
-	}
-
-	if productResponses == nil {
-		productResponses = make([]response.ProductResponse, 0)
-	}
-
-	return productResponses, nil
-}
-
 func (r *ProductRepository) CheckCategoriesExist(catIDs []uint) []entity.Category {
 	var categories []entity.Category
 	if err := r.db.Where("id IN ?", catIDs).Find(&categories).Error; err != nil {
