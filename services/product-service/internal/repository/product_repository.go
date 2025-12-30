@@ -51,13 +51,11 @@ func (r *ProductRepository) GetProductByID(id string) (*entity.Product, error) {
 }
 
 func (r *ProductRepository) AddProduct(productReq *request.ProductRequest) error {
-	// Verify all categories exist
 	categories := r.CheckCategoriesExist(productReq.Categories)
 	if categories == nil {
 		return pkg.CategoryNotFound
 	}
 
-	// Use transaction to ensure atomicity
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		product := entity.Product{
 			Name:        productReq.Name,
@@ -65,7 +63,6 @@ func (r *ProductRepository) AddProduct(productReq *request.ProductRequest) error
 			Price:       productReq.Price,
 		}
 
-		// Create product first
 		if err := tx.Create(&product).Error; err != nil {
 			var pgErr *pgconn.PgError
 			if errors.As(err, &pgErr) && pgErr.Code == "23505" {
@@ -74,7 +71,6 @@ func (r *ProductRepository) AddProduct(productReq *request.ProductRequest) error
 			return err
 		}
 
-		// Use Association API to append categories
 		if err := tx.Model(&product).Association("Categories").Append(categories); err != nil {
 			return err
 		}
@@ -92,13 +88,39 @@ func (r *ProductRepository) UpdateProduct(id string, productReq *request.Product
 		}
 	}
 
-	// if err := r.db.Model(&entity.Product{}).Where("id = ?", id).Updates(productReq).Error; err != nil {
-	// 	var pgErr *pgconn.PgError
-	// 	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-	// 		return nil, pkg.DuplicateEntry
-	// 	}
-	// 	return nil, err
-	// }
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		updates := make(map[string]interface{})
+		if productReq.Name != nil {
+			updates["name"] = *productReq.Name
+		}
+		if productReq.Description != nil {
+			updates["description"] = *productReq.Description
+		}
+		if productReq.Price != nil {
+			updates["price"] = *productReq.Price
+		}
+
+		if productReq.Categories != nil {
+			categories := r.CheckCategoriesExist(*productReq.Categories)
+			var product entity.Product
+			if err := tx.First(&product, "id = ?", id).Error; err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					return pkg.ProductNotFound
+				}
+				return err
+			}
+
+			if err := tx.Model(&product).Association("Categories").Replace(categories); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
 
 	return r.GetProductByID(id)
 }
