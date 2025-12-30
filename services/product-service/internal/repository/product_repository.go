@@ -79,9 +79,10 @@ func (r *ProductRepository) AddProduct(ctx context.Context, productReq *request.
 
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		product := entity.Product{
-			Name:        productReq.Name,
-			Description: productReq.Description,
-			Price:       productReq.Price,
+			Name:         productReq.Name,
+			Description:  productReq.Description,
+			BasePrice:    productReq.BasePrice,
+			ComparePrice: productReq.ComparePrice,
 		}
 
 		if err := tx.Create(&product).Error; err != nil {
@@ -100,25 +101,44 @@ func (r *ProductRepository) AddProduct(ctx context.Context, productReq *request.
 	})
 }
 
-func (r *ProductRepository) UpdateProduct(ctx context.Context, id string, productReq *request.ProductPatchRequest) (
-	*entity.Product, error) {
+func (r *ProductRepository) UpdateProduct(ctx context.Context, id string, productReq *request.ProductPatchRequest) (*entity.Product, error) {
 	if productReq.Categories != nil {
-		categories := r.CheckCategoriesExist(ctx, *productReq.Categories)
-		if categories == nil {
+		if cats := r.CheckCategoriesExist(ctx, *productReq.Categories); cats == nil {
 			return nil, pkg.CategoryNotFound
 		}
 	}
 
+	updates := make(map[string]interface{})
+	if productReq.Name != nil {
+		updates["name"] = *productReq.Name
+	}
+	if productReq.Description != nil {
+		updates["description"] = *productReq.Description
+	}
+	if productReq.BasePrice != nil {
+		updates["base_price"] = *productReq.BasePrice
+	}
+	if productReq.ComparePrice != nil {
+		updates["compare_price"] = *productReq.ComparePrice
+	}
+
+	if len(updates) == 0 && productReq.Categories == nil {
+		return nil, pkg.NoFieldsToUpdate
+	}
+
 	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		updates := make(map[string]interface{})
-		if productReq.Name != nil {
-			updates["name"] = *productReq.Name
-		}
-		if productReq.Description != nil {
-			updates["description"] = *productReq.Description
-		}
-		if productReq.Price != nil {
-			updates["price"] = *productReq.Price
+		if len(updates) > 0 {
+			result := tx.Model(&entity.Product{}).Where("id = ?", id).Updates(updates)
+			if result.Error != nil {
+				var pgErr *pgconn.PgError
+				if errors.As(result.Error, &pgErr) && pgErr.Code == "23505" {
+					return pkg.DuplicateEntry
+				}
+				return result.Error
+			}
+			if result.RowsAffected == 0 {
+				return pkg.ProductNotFound
+			}
 		}
 
 		if productReq.Categories != nil {
@@ -130,19 +150,16 @@ func (r *ProductRepository) UpdateProduct(ctx context.Context, id string, produc
 				}
 				return err
 			}
-
 			if err := tx.Model(&product).Association("Categories").Replace(categories); err != nil {
 				return err
 			}
 		}
-
 		return nil
 	})
 
 	if err != nil {
 		return nil, err
 	}
-
 	return r.GetProductByID(ctx, id)
 }
 
