@@ -10,4 +10,6 @@ var (
 	ProductNotFound              = errors.New("product not found")
 	DuplicateEntry               = errors.New("Duplicated entry found.")
 	NoFieldsToUpdate             = errors.New("no fields provided to update")
+	AttributeNotFound            = errors.New("attribute not found")
+	AttributeHasValues           = errors.New("attribute has values and cannot be deleted")
 )

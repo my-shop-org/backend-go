@@ -17,6 +17,8 @@ func StartServer() {
 	db.AutoMigrate(
 		&entity.Category{},
 		&entity.Product{},
+		&entity.Attribute{},
+		&entity.AttributeValue{},
 	)
 
 	e := echo.New()
@@ -26,6 +28,7 @@ func StartServer() {
 
 	router.RegisterCategoryRoutes(e, db)
 	router.RegisterProductRoutes(e, db)
+	router.RegisterAttributeRoutes(e, db)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

@@ -3,7 +3,6 @@ package pkg
 import (
 	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
@@ -67,16 +66,4 @@ func GetErrorMessage(fe validator.FieldError) string {
 		return fmt.Sprintf("Value must be at most %s characters long", fe.Param())
 	}
 	return fe.Error()
-}
-
-func UintToString(u uint) string {
-	return strconv.FormatUint(uint64(u), 10)
-}
-
-func StringToUint(s string) uint {
-	u64, err := strconv.ParseUint(s, 10, 64)
-	if err != nil {
-		return 0
-	}
-	return uint(u64)
 }
