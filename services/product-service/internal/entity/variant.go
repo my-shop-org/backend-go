@@ -7,12 +7,12 @@ import (
 )
 
 type Variant struct {
-	ProductID     uint            `gorm:"not null" json:"product_id"`
-	Product       Product         `json:"product"`
-	SKU           string          `gorm:"uniqueIndex;not null" json:"sku"`
-	Price         float64         `json:"price"`
-	ComparePrice  float64         `json:"compare_price"`
-	Stock         int             `json:"stock"`
+	ProductID     uint             `gorm:"not null" json:"product_id"`
+	Product       Product          `json:"product"`
+	SKU           string           `gorm:"uniqueIndex;not null" json:"sku"`
+	BasePrice     float64          `json:"base_price"`
+	ComparePrice  float64          `json:"compare_price"`
+	Stock         int              `json:"stock"`
 	ProductImages []ProductImage   `gorm:"foreignKey:VariantID" json:"product_images"`
 	Attributes    []AttributeValue `gorm:"many2many:variant_attribute_values;" json:"attributes"`
 
@@ -23,7 +23,7 @@ type Variant struct {
 
 func (v *Variant) BeforeCreate(tx *gorm.DB) (err error) {
 	if v.ComparePrice == 0 {
-		v.ComparePrice = v.Price
+		v.ComparePrice = v.BasePrice
 	}
 	return
 }
