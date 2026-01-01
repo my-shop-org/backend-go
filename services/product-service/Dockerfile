@@ -1,11 +1,20 @@
-FROM golang:1.25-alpine
+FROM golang:1.24-alpine
 
 RUN apk add --no-cache git && \
-    go install github.com/air-verse/air@latest
+    go install github.com/air-verse/air@v1.61.5
 
-WORKDIR /app
-COPY go.mod go.sum ./
+WORKDIR /workspace
+
+# Copy shared module
+COPY shared /workspace/shared
+
+# Copy product-service
+COPY services/product-service /workspace/services/product-service
+
+# Set working directory to product-service
+WORKDIR /workspace/services/product-service
+
 RUN go mod download
-COPY . .
+
 EXPOSE 8080
 CMD ["air"]

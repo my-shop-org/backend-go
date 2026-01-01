@@ -1,10 +1,13 @@
 services:
   app:
-    build: .
+    build:
+      context: ../..
+      dockerfile: services/product-service/Dockerfile
     ports:
       - "8080:8080"
     volumes:
-      - .:/app
+      - ../../shared:/workspace/shared
+      - .:/workspace/services/product-service
     environment:
       - AIR_DEBUG=true
       - CMD=local

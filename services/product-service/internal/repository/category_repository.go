@@ -3,11 +3,11 @@ package repository
 import (
 	"errors"
 	"product-service/internal/entity"
-	"product-service/internal/pkg"
 	"product-service/internal/request"
 	"product-service/internal/response"
 
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/kaunghtethein/backend-go/shared/pkg"
 	"gorm.io/gorm"
 )
 

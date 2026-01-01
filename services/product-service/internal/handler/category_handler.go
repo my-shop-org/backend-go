@@ -3,10 +3,10 @@ package handler
 import (
 	"errors"
 	"net/http"
-	"product-service/internal/pkg"
 	"product-service/internal/request"
 	"product-service/internal/usecase"
 
+	"github.com/kaunghtethein/backend-go/shared/pkg"
 	"github.com/labstack/echo/v4"
 )
 

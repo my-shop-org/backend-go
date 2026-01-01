@@ -5,9 +5,9 @@ import (
 	router "product-service/internal"
 	"product-service/internal/entity"
 	"product-service/internal/middleware"
-	"product-service/internal/pkg"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/kaunghtethein/backend-go/shared/pkg"
 	"github.com/labstack/echo/v4"
 )
 

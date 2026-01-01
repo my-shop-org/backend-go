@@ -2,10 +2,10 @@ package router
 
 import (
 	"product-service/internal/handler"
-	"product-service/internal/pkg"
 	"product-service/internal/repository"
 	"product-service/internal/usecase"
 
+	"github.com/kaunghtethein/backend-go/shared/pkg"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )
