@@ -6,7 +6,8 @@ import (
 	"product-service/internal/request"
 	"product-service/internal/usecase"
 
-	"github.com/kaunghtethein/backend-go/shared/pkg"
+	"myshop-shared/pkg"
+
 	"github.com/labstack/echo/v4"
 )
 

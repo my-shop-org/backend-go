@@ -6,8 +6,9 @@ import (
 	"product-service/internal/entity"
 	"product-service/internal/middleware"
 
+	"myshop-shared/pkg"
+
 	"github.com/go-playground/validator/v10"
-	"github.com/kaunghtethein/backend-go/shared/pkg"
 	"github.com/labstack/echo/v4"
 )
 

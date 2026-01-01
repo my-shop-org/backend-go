@@ -1,4 +1,4 @@
-module github.com/kaunghtethein/backend-go/shared
+module myshop-shared
 
 go 1.24.0
 

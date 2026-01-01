@@ -8,15 +8,15 @@ require (
 	github.com/go-playground/validator/v10 v10.28.0
 	github.com/jackc/pgx/v5 v5.7.6
 	github.com/joho/godotenv v1.5.1
-	github.com/kaunghtethein/backend-go/shared v0.0.0
 	github.com/labstack/echo/v4 v4.13.4
 	github.com/labstack/gommon v0.4.2
 	github.com/spf13/cobra v1.10.2
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.31.1
+	myshop-shared v0.0.0
 )
 
-replace github.com/kaunghtethein/backend-go/shared => ../../shared
+replace myshop-shared => ../../shared
 
 require (
 	github.com/gabriel-vasile/mimetype v1.4.10 // indirect

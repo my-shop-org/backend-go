@@ -8,8 +8,9 @@ import (
 	"product-service/internal/request"
 	"product-service/internal/response"
 
+	"myshop-shared/pkg"
+
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/kaunghtethein/backend-go/shared/pkg"
 	"gorm.io/gorm"
 )
 
