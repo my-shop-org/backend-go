@@ -10,7 +10,6 @@ type AttributeValue struct {
 	UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 
 	AttributeID uint      `gorm:"not null" json:"attribute_id"`
-	Attribute   Attribute `json:"attribute"`
+	Attribute   Attribute `json:"-"`
 	Value       string    `gorm:"not null" json:"value"` // e.g., S, M, L or Red, Blue
-
 }

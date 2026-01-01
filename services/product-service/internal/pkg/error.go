@@ -12,4 +12,5 @@ var (
 	NoFieldsToUpdate             = errors.New("no fields provided to update")
 	AttributeNotFound            = errors.New("attribute not found")
 	AttributeHasValues           = errors.New("attribute has values and cannot be deleted")
+	AttributeValueNotFound       = errors.New("attribute value not found")
 )

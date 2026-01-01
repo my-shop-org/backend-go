@@ -5,7 +5,6 @@ import (
 	"product-service/internal/entity"
 	"product-service/internal/pkg"
 	"product-service/internal/request"
-	"product-service/internal/response"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
@@ -31,43 +30,22 @@ func (r *AttributeRepository) CheckIfAttributeExists(id string) bool {
 	return true
 }
 
-func (r *AttributeRepository) GetAllAttributes() ([]response.AttributeResponse, error) {
+func (r *AttributeRepository) GetAllAttributes() ([]entity.Attribute, error) {
 	var attrs []entity.Attribute
 	if err := r.db.Preload("Values").Find(&attrs).Error; err != nil {
 		return nil, err
 	}
 
-	res := make([]response.AttributeResponse, 0, len(attrs))
-	for _, a := range attrs {
-		ar := response.AttributeResponse{
-			ID:   a.ID,
-			Name: a.Name,
-		}
-		for _, v := range a.Values {
-			ar.Values = append(ar.Values, response.AttributeValueResponse{ID: v.ID, Value: v.Value})
-		}
-		res = append(res, ar)
-	}
-	if res == nil {
-		res = make([]response.AttributeResponse, 0)
-	}
-	return res, nil
+	return attrs, nil
 }
 
-func (r *AttributeRepository) GetAttributeByID(id string) (*response.AttributeResponse, error) {
+func (r *AttributeRepository) GetAttributeByID(id string) (*entity.Attribute, error) {
 	var a entity.Attribute
 	if err := r.db.Preload("Values").First(&a, "id = ?", id).Error; err != nil {
 		return nil, err
 	}
 
-	ar := &response.AttributeResponse{
-		ID:   a.ID,
-		Name: a.Name,
-	}
-	for _, v := range a.Values {
-		ar.Values = append(ar.Values, response.AttributeValueResponse{ID: v.ID, Value: v.Value})
-	}
-	return ar, nil
+	return &a, nil
 }
 
 func (r *AttributeRepository) AddAttribute(attr *request.AttributeRequest) error {
@@ -82,7 +60,7 @@ func (r *AttributeRepository) AddAttribute(attr *request.AttributeRequest) error
 	return nil
 }
 
-func (r *AttributeRepository) UpdateAttribute(id string, attr *request.AttributePatchRequest) (*response.AttributeResponse, error) {
+func (r *AttributeRepository) UpdateAttribute(id string, attr *request.AttributePatchRequest) (*entity.Attribute, error) {
 	if !r.CheckIfAttributeExists(id) {
 		return nil, pkg.AttributeNotFound
 	}

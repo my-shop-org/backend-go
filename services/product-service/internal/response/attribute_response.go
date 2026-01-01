@@ -10,3 +10,9 @@ type AttributeResponse struct {
 	Name   string                   `json:"name"`
 	Values []AttributeValueResponse `json:"values,omitempty"`
 }
+
+type AttributeValueDetailResponse struct {
+	ID          uint   `json:"id"`
+	AttributeID uint   `json:"attribute_id"`
+	Value       string `json:"value"`
+}

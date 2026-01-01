@@ -29,6 +29,7 @@ func StartServer() {
 	router.RegisterCategoryRoutes(e, db)
 	router.RegisterProductRoutes(e, db)
 	router.RegisterAttributeRoutes(e, db)
+	router.RegisterAttributeValueRoutes(e, db)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }
