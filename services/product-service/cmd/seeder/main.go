@@ -2,9 +2,11 @@ package main
 
 import (
 	"log"
+	"math/rand"
 	"product-service/config"
 	"product-service/internal/entity"
 	"strconv"
+	"time"
 
 	"github.com/joho/godotenv"
 	"gorm.io/gorm"
@@ -75,6 +77,43 @@ func (s *DBSeeder) SeedProduct(categories []*entity.Category) error {
 	return tx.Commit().Error
 }
 
+func (s *DBSeeder) SeedAttributes() ([]*entity.Attribute, error) {
+	attriubtes := make([]*entity.Attribute, 10)
+
+	for i := range attriubtes {
+		attriubtes[i] = &entity.Attribute{
+			Name: "Attribute " + strconv.Itoa(i+1),
+		}
+	}
+
+	s.db.Create(&attriubtes)
+
+	return attriubtes, nil
+}
+
+func (s *DBSeeder) SeedAttributeValue(attributes []*entity.Attribute) error {
+	rand.Seed(time.Now().UnixNano())
+
+	for i := 0; i < 30; i++ {
+		var attrID uint
+		if len(attributes) > 0 {
+			idx := rand.Intn(len(attributes))
+			attrID = attributes[idx].ID
+		} else {
+			attrID = uint(rand.Intn(10) + 1)
+		}
+
+		av := &entity.AttributeValue{
+			AttributeID: attrID,
+			Value:       "Value " + strconv.Itoa(i+1),
+		}
+		if err := s.db.Create(&av).Error; err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (s *DBSeeder) Clear() error {
 	if err := s.db.Exec("DELETE FROM product_categories").Error; err != nil {
 		return err
@@ -82,7 +121,15 @@ func (s *DBSeeder) Clear() error {
 	if err := s.db.Exec("DELETE FROM products").Error; err != nil {
 		return err
 	}
+
 	if err := s.db.Exec("DELETE FROM categories").Error; err != nil {
+		return err
+	}
+
+	if err := s.db.Exec("DELETE FROM attributes").Error; err != nil {
+		return err
+	}
+	if err := s.db.Exec("DELETE FROM attribute_values").Error; err != nil {
 		return err
 	}
 	return nil
@@ -92,6 +139,8 @@ func (s *DBSeeder) Seed() error {
 	categories, _ := s.SeedCategory()
 	s.SeedProduct(categories)
 
+	attributes, _ := s.SeedAttributes()
+	s.SeedAttributeValue(attributes)
 	return nil
 }
 
@@ -99,5 +148,6 @@ func main() {
 	db := config.ConnectDB()
 	s := NewDBSeeder(db)
 
+	s.Clear()
 	s.Seed()
 }
