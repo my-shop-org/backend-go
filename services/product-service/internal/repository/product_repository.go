@@ -6,7 +6,6 @@ import (
 	"product-service/internal/entity"
 	"product-service/internal/params"
 	"product-service/internal/request"
-	"product-service/internal/response"
 
 	"myshop-shared/pkg"
 
@@ -40,7 +39,7 @@ func (r *ProductRepository) BuildQuery(ctx context.Context, params *params.Produ
 
 	query := pkg.NewQueryBuilder(baseQuery).
 		ApplyPagination(params.Limit, params.Offset).
-		ApplyPreload([]string{"Categories"}).Build()
+		ApplyPreload([]string{"Categories", "Attributes"}).Build()
 
 	if params.CategoryID != "" {
 		query = query.Joins("JOIN product_categories pc ON pc.product_id = products.id").
@@ -52,21 +51,13 @@ func (r *ProductRepository) BuildQuery(ctx context.Context, params *params.Produ
 
 func (r *ProductRepository) GetProductByID(ctx context.Context, id string) (*entity.Product, error) {
 	var product = new(entity.Product)
-	if err := r.db.WithContext(ctx).Preload("Categories").First(&product, "id = ?", id).Error; err != nil {
+	if err := r.db.WithContext(ctx).Preload("Categories").
+		Preload("Attributes").
+		First(&product, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, pkg.ProductNotFound
 		}
 		return nil, err
-	}
-
-	categories := make([]response.CategoryResponse, len(product.Categories))
-	for i, cat := range product.Categories {
-		categories[i] = response.CategoryResponse{
-			ID:          cat.ID,
-			Name:        cat.Name,
-			Description: cat.Description,
-			ParentID:    cat.ParentID,
-		}
 	}
 
 	return product, nil
@@ -76,6 +67,14 @@ func (r *ProductRepository) AddProduct(ctx context.Context, productReq *request.
 	categories := r.CheckCategoriesExist(ctx, productReq.Categories)
 	if categories == nil {
 		return pkg.CategoryNotFound
+	}
+
+	var attributes []entity.Attribute
+	if len(productReq.Attributes) > 0 {
+		attributes = r.CheckAttributesExist(ctx, productReq.Attributes)
+		if attributes == nil {
+			return pkg.AttributeNotFound
+		}
 	}
 
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
@@ -98,6 +97,12 @@ func (r *ProductRepository) AddProduct(ctx context.Context, productReq *request.
 			return err
 		}
 
+		if len(attributes) > 0 {
+			if err := tx.Model(&product).Association("Attributes").Append(attributes); err != nil {
+				return err
+			}
+		}
+
 		return nil
 	})
 }
@@ -106,6 +111,12 @@ func (r *ProductRepository) UpdateProduct(ctx context.Context, id string, produc
 	if productReq.Categories != nil {
 		if cats := r.CheckCategoriesExist(ctx, *productReq.Categories); cats == nil {
 			return nil, pkg.CategoryNotFound
+		}
+	}
+
+	if productReq.Attributes != nil && len(*productReq.Attributes) > 0 {
+		if attrs := r.CheckAttributesExist(ctx, *productReq.Attributes); attrs == nil {
+			return nil, pkg.AttributeNotFound
 		}
 	}
 
@@ -123,7 +134,7 @@ func (r *ProductRepository) UpdateProduct(ctx context.Context, id string, produc
 		updates["compare_price"] = *productReq.ComparePrice
 	}
 
-	if len(updates) == 0 && productReq.Categories == nil {
+	if len(updates) == 0 && productReq.Categories == nil && productReq.Attributes == nil {
 		return nil, pkg.NoFieldsToUpdate
 	}
 
@@ -142,16 +153,24 @@ func (r *ProductRepository) UpdateProduct(ctx context.Context, id string, produc
 			}
 		}
 
+		var product entity.Product
+		if err := tx.First(&product, "id = ?", id).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pkg.ProductNotFound
+			}
+			return err
+		}
+
 		if productReq.Categories != nil {
 			categories := r.CheckCategoriesExist(ctx, *productReq.Categories)
-			var product entity.Product
-			if err := tx.First(&product, "id = ?", id).Error; err != nil {
-				if errors.Is(err, gorm.ErrRecordNotFound) {
-					return pkg.ProductNotFound
-				}
+			if err := tx.Model(&product).Association("Categories").Replace(categories); err != nil {
 				return err
 			}
-			if err := tx.Model(&product).Association("Categories").Replace(categories); err != nil {
+		}
+
+		if productReq.Attributes != nil {
+			attributes := r.CheckAttributesExist(ctx, *productReq.Attributes)
+			if err := tx.Model(&product).Association("Attributes").Replace(attributes); err != nil {
 				return err
 			}
 		}
@@ -196,4 +215,17 @@ func (r *ProductRepository) CheckCategoriesExist(ctx context.Context, catIDs []u
 	}
 
 	return categories
+}
+
+func (r *ProductRepository) CheckAttributesExist(ctx context.Context, attrIDs []uint) []entity.Attribute {
+	var attributes []entity.Attribute
+	if err := r.db.WithContext(ctx).Where("id IN ?", attrIDs).Find(&attributes).Error; err != nil {
+		return nil
+	}
+
+	if len(attributes) != len(attrIDs) {
+		return nil
+	}
+
+	return attributes
 }

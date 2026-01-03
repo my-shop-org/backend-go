@@ -69,3 +69,17 @@ func RegisterAttributeValueRoutes(e *echo.Echo, db *gorm.DB) {
 	attributeValueGroup.PATCH("/:id", pkg.BindAndValidate(attributeValueHandler.PatchAttributeValue))
 	attributeValueGroup.DELETE("/:id", attributeValueHandler.DeleteAttributeValue)
 }
+
+func RegisterVariantRoutes(e *echo.Echo, db *gorm.DB) {
+	variantGroup := e.Group("/variants")
+
+	variantRepo := repository.NewVariantRepository(db)
+	variantUsecase := usecase.NewVariantUsecase(variantRepo)
+	variantHandler := handler.NewVariantHandler(variantUsecase)
+
+	variantGroup.GET("", variantHandler.GetAllVariants)
+	variantGroup.GET("/:id", variantHandler.GetVariantByID)
+	variantGroup.POST("", pkg.BindAndValidate(variantHandler.AddVariant))
+	variantGroup.PATCH("/:id", pkg.BindAndValidate(variantHandler.PatchVariant))
+	variantGroup.DELETE("/:id", variantHandler.DeleteVariant)
+}

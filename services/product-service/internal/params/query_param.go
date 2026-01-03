@@ -18,3 +18,17 @@ func NewProductQueryParam() *ProductQueryParam {
 		},
 	}
 }
+
+type VariantQueryParam struct {
+	BaseQueryParam
+	ProductID string `query:"product_id"`
+}
+
+func NewVariantQueryParam() *VariantQueryParam {
+	return &VariantQueryParam{
+		BaseQueryParam: BaseQueryParam{
+			Limit:  10,
+			Offset: 0,
+		},
+	}
+}

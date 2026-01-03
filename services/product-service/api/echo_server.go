@@ -20,6 +20,8 @@ func StartServer() {
 		&entity.Product{},
 		&entity.Attribute{},
 		&entity.AttributeValue{},
+		&entity.Variant{},
+		&entity.ProductImage{},
 	)
 
 	e := echo.New()
@@ -31,6 +33,7 @@ func StartServer() {
 	router.RegisterProductRoutes(e, db)
 	router.RegisterAttributeRoutes(e, db)
 	router.RegisterAttributeValueRoutes(e, db)
+	router.RegisterVariantRoutes(e, db)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

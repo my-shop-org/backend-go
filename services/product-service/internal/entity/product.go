@@ -10,6 +10,7 @@ type Product struct {
 	Name          string         `json:"name" gorm:"unique;not null"`
 	Description   string         `json:"description"`
 	Categories    []*Category    `gorm:"many2many:product_categories;" json:"categories,omitempty"`
+	Attributes    []*Attribute   `gorm:"many2many:product_attributes;" json:"attributes,omitempty"`
 	BasePrice     float64        `gorm:"not null" json:"base_price"`
 	ComparePrice  float64        `json:"compare_price" gorm:"default:0"`
 	Currency      string         `gorm:"not null;default:MMK" json:"currency"`

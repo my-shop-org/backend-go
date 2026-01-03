@@ -52,6 +52,8 @@ func (h *ProductHandler) AddProduct(c echo.Context, product *request.ProductRequ
 		switch {
 		case errors.Is(err, pkg.CategoryNotFound):
 			return c.JSON(http.StatusNotFound, echo.Map{"message": "One or more categories not found"})
+		case errors.Is(err, pkg.AttributeNotFound):
+			return c.JSON(http.StatusNotFound, echo.Map{"message": "One or more attributes not found"})
 		case errors.Is(err, pkg.DuplicateEntry):
 			return c.JSON(http.StatusConflict, echo.Map{"message": "Product already exists"})
 		default:
@@ -72,6 +74,8 @@ func (h *ProductHandler) PatchProduct(c echo.Context, product *request.ProductPa
 			return c.JSON(http.StatusNotFound, echo.Map{"message": "Product not found"})
 		case errors.Is(err, pkg.CategoryNotFound):
 			return c.JSON(http.StatusNotFound, echo.Map{"message": "One or more categories not found"})
+		case errors.Is(err, pkg.AttributeNotFound):
+			return c.JSON(http.StatusNotFound, echo.Map{"message": "One or more attributes not found"})
 		case errors.Is(err, pkg.DuplicateEntry):
 			return c.JSON(http.StatusConflict, echo.Map{"message": "Product name already exists"})
 		case errors.Is(err, pkg.NoFieldsToUpdate):
