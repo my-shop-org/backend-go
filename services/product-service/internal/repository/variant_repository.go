@@ -71,15 +71,15 @@ func (r *VariantRepository) AddVariant(ctx context.Context, variantReq *request.
 	}
 
 	// Check if attributes exist and belong to product
-	var attributes []entity.AttributeValue
+	var attributeValues []entity.AttributeValue
 	if len(variantReq.AttributeValues) > 0 {
-		attributes = r.CheckAttributeValuesExist(ctx, variantReq.AttributeValues)
-		if attributes == nil {
+		attributeValues = r.CheckAttributeValuesExist(ctx, variantReq.AttributeValues)
+		if attributeValues == nil {
 			return pkg.AttributeValueNotFound
 		}
 
-		// Validate that all attribute values belong to product's attributes
-		if !r.ValidateAttributeValuesForProduct(ctx, product, attributes) {
+		// Validate that all attribute values belong to product's attributeValues
+		if !r.ValidateAttributeValuesForProduct(ctx, product, attributeValues) {
 			return pkg.InvalidAttributeValueForProduct
 		}
 	}
@@ -91,10 +91,10 @@ func (r *VariantRepository) AddVariant(ctx context.Context, variantReq *request.
 			BasePrice:       variantReq.BasePrice,
 			ComparePrice:    variantReq.ComparePrice,
 			Stock:           variantReq.Stock,
-			AttributeValues: attributes,
+			AttributeValues: attributeValues,
 		}
 
-		if err := tx.Session(&gorm.Session{FullSaveAssociations: true}).Create(&variant).Error; err != nil {
+		if err := tx.Model(&product).Association("AttributeValues").Append(variant); err != nil {
 			var pgErr *pgconn.PgError
 			if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 				return pkg.DuplicateEntry
@@ -191,7 +191,7 @@ func (r *VariantRepository) UpdateVariant(ctx context.Context, id string, varian
 			variant.AttributeValues = attributes
 
 			// Use FullSaveAssociations to save the association
-			if err := tx.Session(&gorm.Session{FullSaveAssociations: true}).Model(&variant).Save(&variant).Error; err != nil {
+			if err := tx.Model(&product).Association("AttributeValues").Replace(variant); err != nil {
 				return err
 			}
 		}
