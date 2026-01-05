@@ -103,6 +103,20 @@ func (r *ProductRepository) AddProduct(ctx context.Context, productReq *request.
 			}
 		}
 
+		// Add product images if provided
+		if len(productReq.ProductImages) > 0 {
+			for _, imgInput := range productReq.ProductImages {
+				image := entity.ProductImage{
+					ProductID: product.ID,
+					URL:       imgInput.URL,
+					IsDefault: imgInput.IsDefault,
+				}
+				if err := tx.Create(&image).Error; err != nil {
+					return err
+				}
+			}
+		}
+
 		return nil
 	})
 }
@@ -134,7 +148,7 @@ func (r *ProductRepository) UpdateProduct(ctx context.Context, id string, produc
 		updates["compare_price"] = *productReq.ComparePrice
 	}
 
-	if len(updates) == 0 && productReq.Categories == nil && productReq.Attributes == nil {
+	if len(updates) == 0 && productReq.Categories == nil && productReq.Attributes == nil && productReq.ProductImages == nil {
 		return nil, pkg.NoFieldsToUpdate
 	}
 
@@ -172,6 +186,25 @@ func (r *ProductRepository) UpdateProduct(ctx context.Context, id string, produc
 			attributes := r.CheckAttributesExist(ctx, *productReq.Attributes)
 			if err := tx.Model(&product).Association("Attributes").Replace(attributes); err != nil {
 				return err
+			}
+		}
+
+		if productReq.ProductImages != nil {
+			// Delete existing images
+			if err := tx.Where("product_id = ?", id).Delete(&entity.ProductImage{}).Error; err != nil {
+				return err
+			}
+
+			// Add new images
+			for _, imgInput := range *productReq.ProductImages {
+				image := entity.ProductImage{
+					ProductID: product.ID,
+					URL:       imgInput.URL,
+					IsDefault: imgInput.IsDefault,
+				}
+				if err := tx.Create(&image).Error; err != nil {
+					return err
+				}
 			}
 		}
 		return nil

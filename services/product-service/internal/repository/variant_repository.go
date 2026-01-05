@@ -94,12 +94,27 @@ func (r *VariantRepository) AddVariant(ctx context.Context, variantReq *request.
 			AttributeValues: attributeValues,
 		}
 
-		if err := tx.Model(&product).Association("AttributeValues").Append(variant); err != nil {
+		if err := tx.Create(&variant).Error; err != nil {
 			var pgErr *pgconn.PgError
 			if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 				return pkg.DuplicateEntry
 			}
 			return err
+		}
+
+		// Add variant images if provided
+		if len(variantReq.ProductImages) > 0 {
+			for _, imgInput := range variantReq.ProductImages {
+				image := entity.ProductImage{
+					ProductID: variantReq.ProductID,
+					VariantID: &variant.ID,
+					URL:       imgInput.URL,
+					IsDefault: imgInput.IsDefault,
+				}
+				if err := tx.Create(&image).Error; err != nil {
+					return err
+				}
+			}
 		}
 
 		return nil
@@ -159,7 +174,7 @@ func (r *VariantRepository) UpdateVariant(ctx context.Context, id string, varian
 		updates["stock"] = *variantReq.Stock
 	}
 
-	if len(updates) == 0 && variantReq.AttributeValues == nil {
+	if len(updates) == 0 && variantReq.AttributeValues == nil && variantReq.ProductImages == nil {
 		return nil, pkg.NoFieldsToUpdate
 	}
 
@@ -193,6 +208,27 @@ func (r *VariantRepository) UpdateVariant(ctx context.Context, id string, varian
 			// Use FullSaveAssociations to save the association
 			if err := tx.Model(&product).Association("AttributeValues").Replace(variant); err != nil {
 				return err
+			}
+		}
+
+		// Update product images if provided
+		if variantReq.ProductImages != nil {
+			// Delete existing images for this variant
+			if err := tx.Where("variant_id = ?", variant.ID).Delete(&entity.ProductImage{}).Error; err != nil {
+				return err
+			}
+
+			// Add new images
+			for _, imgInput := range *variantReq.ProductImages {
+				image := entity.ProductImage{
+					ProductID: variant.ProductID,
+					VariantID: &variant.ID,
+					URL:       imgInput.URL,
+					IsDefault: imgInput.IsDefault,
+				}
+				if err := tx.Create(&image).Error; err != nil {
+					return err
+				}
 			}
 		}
 		return nil

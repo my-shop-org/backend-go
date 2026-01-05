@@ -34,6 +34,7 @@ func StartServer() {
 	router.RegisterAttributeRoutes(e, db)
 	router.RegisterAttributeValueRoutes(e, db)
 	router.RegisterVariantRoutes(e, db)
+	router.RegisterProductImageRoutes(e, db)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

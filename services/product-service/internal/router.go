@@ -83,3 +83,19 @@ func RegisterVariantRoutes(e *echo.Echo, db *gorm.DB) {
 	variantGroup.PATCH("/:id", pkg.BindAndValidate(variantHandler.PatchVariant))
 	variantGroup.DELETE("/:id", variantHandler.DeleteVariant)
 }
+
+func RegisterProductImageRoutes(e *echo.Echo, db *gorm.DB) {
+	productImageGroup := e.Group("/product-images")
+
+	productImageRepo := repository.NewProductImageRepository(db)
+	productImageUsecase := usecase.NewProductImageUsecase(productImageRepo)
+	productImageHandler := handler.NewProductImageHandler(productImageUsecase)
+
+	productImageGroup.GET("", productImageHandler.GetAllProductImages)
+	productImageGroup.GET("/:id", productImageHandler.GetProductImageByID)
+	productImageGroup.GET("/product/:productId", productImageHandler.GetImagesByProductID)
+	productImageGroup.GET("/variant/:variantId", productImageHandler.GetImagesByVariantID)
+	productImageGroup.POST("", pkg.BindAndValidate(productImageHandler.AddProductImage))
+	productImageGroup.PATCH("/:id", pkg.BindAndValidate(productImageHandler.UpdateProductImage))
+	productImageGroup.DELETE("/:id", productImageHandler.DeleteProductImage)
+}
