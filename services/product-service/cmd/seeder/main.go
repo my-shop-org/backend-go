@@ -88,6 +88,20 @@ func (s *DBSeeder) SeedProduct(categories []*entity.Category, attributes []*enti
 				return err
 			}
 		}
+
+		// Add product images
+		imageCount := rand.Intn(3) + 1
+		for j := 0; j < imageCount; j++ {
+			image := entity.ProductImage{
+				ProductID: p.ID,
+				URL:       "https://via.placeholder.com/400x400?text=Product+" + strconv.Itoa(i+1) + "+Image+" + strconv.Itoa(j+1),
+				IsDefault: j == 0,
+			}
+			if err := tx.Create(&image).Error; err != nil {
+				tx.Rollback()
+				return err
+			}
+		}
 	}
 
 	return tx.Commit().Error
@@ -192,6 +206,20 @@ func (s *DBSeeder) SeedVariants(attributeValues []*entity.AttributeValue) error 
 					return err
 				}
 			}
+
+			// Add variant images
+			imageCount := rand.Intn(2) + 1
+			for k := 0; k < imageCount; k++ {
+				image := entity.ProductImage{
+					ProductID: product.ID,
+					VariantID: &variant.ID,
+					URL:       "https://via.placeholder.com/400x400?text=Variant+" + strconv.Itoa(int(variant.ID)) + "+Image+" + strconv.Itoa(k+1),
+					IsDefault: k == 0,
+				}
+				if err := s.db.Create(&image).Error; err != nil {
+					return err
+				}
+			}
 		}
 	}
 	return nil
@@ -202,6 +230,9 @@ func (s *DBSeeder) Clear() error {
 		return err
 	}
 	if err := s.db.Exec("DELETE FROM variant_attribute_values").Error; err != nil {
+		return err
+	}
+	if err := s.db.Exec("DELETE FROM product_images").Error; err != nil {
 		return err
 	}
 	if err := s.db.Exec("DELETE FROM variants").Error; err != nil {
