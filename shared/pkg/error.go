@@ -15,4 +15,5 @@ var (
 	AttributeValueNotFound         = errors.New("attribute value not found")
 	VariantNotFound                = errors.New("variant not found")
 	InvalidAttributeValueForProduct = errors.New("attribute value does not belong to product's attributes")
+	ProductImageNotFound           = errors.New("product image not found")
 )

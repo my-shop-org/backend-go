@@ -11,8 +11,14 @@ import (
 	"gorm.io/gorm"
 )
 
+func RegisterHealthCheckRoute(e *echo.Echo) {
+	e.GET("/product/health-check", func(c echo.Context) error {
+		return c.JSON(200, map[string]string{"message": "Product service is running"})
+	})
+}
+
 func RegisterCategoryRoutes(e *echo.Echo, db *gorm.DB) {
-	categoryGroup := e.Group("/categories")
+	categoryGroup := e.Group("/product/categories")
 
 	categoryRepo := repository.NewCategoryRepository(db)
 	categoryUsecase := usecase.NewCategoryUsecase(categoryRepo)
@@ -29,7 +35,7 @@ func RegisterCategoryRoutes(e *echo.Echo, db *gorm.DB) {
 }
 
 func RegisterProductRoutes(e *echo.Echo, db *gorm.DB) {
-	productGroup := e.Group("/products")
+	productGroup := e.Group("/product/products")
 
 	productRepo := repository.NewProductRepository(db)
 	productUsecase := usecase.NewProductUsecase(productRepo)
@@ -43,7 +49,7 @@ func RegisterProductRoutes(e *echo.Echo, db *gorm.DB) {
 }
 
 func RegisterAttributeRoutes(e *echo.Echo, db *gorm.DB) {
-	attributeGroup := e.Group("/attributes")
+	attributeGroup := e.Group("/product/attributes")
 
 	attributeRepo := repository.NewAttributeRepository(db)
 	attributeUsecase := usecase.NewAttributeUsecase(attributeRepo)
@@ -57,7 +63,7 @@ func RegisterAttributeRoutes(e *echo.Echo, db *gorm.DB) {
 }
 
 func RegisterAttributeValueRoutes(e *echo.Echo, db *gorm.DB) {
-	attributeValueGroup := e.Group("/attribute-values")
+	attributeValueGroup := e.Group("/product/attribute-values")
 
 	attributeValueRepo := repository.NewAttributeValueRepository(db)
 	attributeValueUsecase := usecase.NewAttributeValueUsecase(attributeValueRepo)
@@ -71,7 +77,7 @@ func RegisterAttributeValueRoutes(e *echo.Echo, db *gorm.DB) {
 }
 
 func RegisterVariantRoutes(e *echo.Echo, db *gorm.DB) {
-	variantGroup := e.Group("/variants")
+	variantGroup := e.Group("/product/variants")
 
 	variantRepo := repository.NewVariantRepository(db)
 	variantUsecase := usecase.NewVariantUsecase(variantRepo)
@@ -85,7 +91,7 @@ func RegisterVariantRoutes(e *echo.Echo, db *gorm.DB) {
 }
 
 func RegisterProductImageRoutes(e *echo.Echo, db *gorm.DB) {
-	productImageGroup := e.Group("/product-images")
+	productImageGroup := e.Group("/product/product-images")
 
 	productImageRepo := repository.NewProductImageRepository(db)
 	productImageUsecase := usecase.NewProductImageUsecase(productImageRepo)

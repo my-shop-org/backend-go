@@ -29,6 +29,7 @@ func StartServer() {
 
 	middleware.RegisterBasicMiddleware(e)
 
+	router.RegisterHealthCheckRoute(e)
 	router.RegisterCategoryRoutes(e, db)
 	router.RegisterProductRoutes(e, db)
 	router.RegisterAttributeRoutes(e, db)
@@ -36,5 +37,5 @@ func StartServer() {
 	router.RegisterVariantRoutes(e, db)
 	router.RegisterProductImageRoutes(e, db)
 
-	e.Logger.Fatal(e.Start(":8080"))
+	e.Logger.Fatal(e.Start(":8081"))
 }
